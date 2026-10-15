@@ -4,7 +4,7 @@
 
 - **Date:** June 2026
 - **Target Environment:** Proxmox VE (LXC Container)
-- **Author:** DevOps Engineering
+- **Author:** Philip Obour-Bonsu
 
 ---
 
