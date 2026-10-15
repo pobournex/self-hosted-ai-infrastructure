@@ -5,6 +5,7 @@
 - **Date:** June 2026
 - **Target Environment:** Proxmox VE (LXC Container)
 - **Author:** Philip Obour-Bonsu
+- **Stack:** Proxmox VE · LXC · Docker · Ollama · Open WebUI · Llama 3.2 · Qwen 2.5
 
 ---
 
@@ -13,6 +14,21 @@
 This project documents the end-to-end engineering, implementation, and resource optimization of a 100% private, self-hosted AI platform deployed in a home lab. Using open-source containerization and quantized large language models, the architecture delivers local AI capabilities independent of external cloud ecosystems, vendor lock-in, or internet dependencies.
 
 **Key Objective:** Absolute data privacy, near-zero latency via localized networking, and data sovereignty over all input/output traffic.
+
+### Architecture Overview
+
+```mermaid
+flowchart LR
+    C["LAN client<br/>browser / PWA"] -->|HTTP :3000| W
+    subgraph PVE["Proxmox VE node"]
+        subgraph LXC["LXC ollama-core (192.168.40.218)"]
+            subgraph D["Docker network: ai-network"]
+                W["Open WebUI"] -->|":11434"| O["Ollama<br/>llama3.2 / qwen2.5:1.5b"]
+            end
+        end
+    end
+    O --- V[("Persistent volumes<br/>ollama, open-webui")]
+```
 
 ---
 
@@ -98,6 +114,14 @@ docker run -d \
   ghcr.io/open-webui/open-webui:main
 ```
 
+### 4.3 Reproducible Deployment (Docker Compose)
+
+The same stack is defined in [`docker-compose.yml`](docker-compose.yml) for one-command, repeatable deployment:
+
+```bash
+docker compose up -d
+```
+
 ---
 
 ## 5. Large Language Model Selection & Optimization
@@ -127,3 +151,55 @@ http://192.168.40.218:3000
 ```
 
 For regular use, the platform was installed as a Progressive Web App (PWA) on target machines, giving app-like behavior on mobile and desktop without exposing endpoints to the public internet.
+
+---
+
+## 7. Verification & Performance
+
+Verify the deployment:
+
+```bash
+docker ps                                   # both containers running
+docker exec ollama ollama list              # models present
+curl http://localhost:11434/api/tags        # Ollama API reachable
+docker exec ollama ollama run llama3.2 "Say hello in one sentence."
+```
+
+Measured on 4 vCPU / 4 GB RAM (CPU-only inference):
+
+| Model | Size on disk | RAM in use | Tokens/sec |
+|---|---|---|---|
+| `llama3.2` (3B) | TBD | TBD | TBD |
+| `qwen2.5:1.5b` | TBD | TBD | TBD |
+
+> Tip: `docker exec ollama ollama run <model> "<prompt>" --verbose` prints the eval rate.
+
+Screenshots: `images/open-webui-chat.png`, `images/proxmox-container-summary.png` (TBD)
+
+---
+
+## 8. Security Considerations
+
+- **Network exposure:** The service is LAN-only and not published to the internet. No port forwarding is configured on the router.
+- **Firewall trade-off:** The Proxmox `net0` firewall was left off during provisioning (see 3.2). Hardening step: enable it and allow only TCP 3000 from the trusted LAN subnet.
+- **Open WebUI access:** Create the admin account on first launch, then disable open sign-ups (Admin Panel → Settings → General).
+- **Remote access:** Use a VPN overlay such as Tailscale rather than exposing port 3000.
+- **Data sovereignty:** Prompts and responses never leave the LXC. Models are pulled once, then inference runs offline.
+
+---
+
+## 9. Troubleshooting & Lessons Learned
+
+| Problem | Cause | Fix |
+|---|---|---|
+| Image pulls from `ghcr.io` timed out | Container resolved DNS through upstream `1.1.1.1` | Pointed `nameserver` at the home router (`192.168.40.1`) |
+| Risk of OOM kills with larger models | 4 GB RAM ceiling | Chose 3B and 1.5B quantized models; kept 512 MB swap as a safeguard |
+
+---
+
+## 10. Operations & Maintenance
+
+- **Update images:** `docker compose pull && docker compose up -d`
+- **Back up volumes:** snapshot the LXC in Proxmox (or Proxmox Backup Server), or archive the `ollama` and `open-webui` Docker volumes.
+- **Add models:** Admin Panel → Settings → Connections → Manage Ollama, or `docker exec ollama ollama pull <model>`.
+- **Future work:** Prometheus/Grafana monitoring, Ansible role to rebuild the LXC end to end, GPU/larger-model evaluation.
