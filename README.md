@@ -169,10 +169,12 @@ Measured on 4 vCPU / 4 GB RAM (CPU-only inference):
 
 | Model | Size on disk | RAM in use | Tokens/sec |
 |---|---|---|---|
-| `llama3.2` (3B) | TBD | TBD | TBD |
-| `qwen2.5:1.5b` | TBD | TBD | TBD |
+| `llama3.2` (3B, q4_K_M) | 2.0 GB | 2.6 GB | 10.0 |
+| `qwen2.5:1.5b` | 986 MB | 1.2 GB | 15.6 |
 
-> Tip: `docker exec ollama ollama run <model> "<prompt>" --verbose` prints the eval rate.
+Prompt: *"Explain what a Kubernetes pod is in two sentences."* Measured with `ollama run <model> "<prompt>" --verbose`; RAM from `ollama ps`. Cold model load took 40 s (`llama3.2`) and 18 s (`qwen2.5:1.5b`) on the first request; later requests skip it while the model stays resident.
+
+**Memory finding:** with both models resident at once, the container used 3.7 GiB of 4.0 GiB RAM and exhausted its 512 MB swap. Within this budget, run one model at a time. Set `OLLAMA_MAX_LOADED_MODELS=1` on the Ollama container, or lower `OLLAMA_KEEP_ALIVE` so idle models unload sooner.
 
 ![Open WebUI running llama3.2:3b-instruct-q4_K_M on the local instance](images/open-webui-chat.png)
 
@@ -198,6 +200,7 @@ Proxmox container summary: `images/proxmox-container-summary.png` (TBD)
 |---|---|---|
 | Image pulls from `ghcr.io` timed out | Container resolved DNS through upstream `1.1.1.1` | Pointed `nameserver` at the home router (`192.168.40.1`) |
 | Risk of OOM kills with larger models | 4 GB RAM ceiling | Chose 3B and 1.5B quantized models; kept 512 MB swap as a safeguard |
+| Swap fully used with two models loaded | `llama3.2` (2.6 GB) and `qwen2.5:1.5b` (1.2 GB) resident together | Limit to one loaded model (`OLLAMA_MAX_LOADED_MODELS=1`) or shorten `OLLAMA_KEEP_ALIVE` |
 
 ---
 
