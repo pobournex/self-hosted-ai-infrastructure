@@ -174,7 +174,11 @@ Measured on 4 vCPU / 4 GB RAM (CPU-only inference):
 
 > Tip: `docker exec ollama ollama run <model> "<prompt>" --verbose` prints the eval rate.
 
-Screenshots: `images/open-webui-chat.png`, `images/proxmox-container-summary.png` (TBD)
+![Open WebUI running llama3.2:3b-instruct-q4_K_M on the local instance](images/open-webui-chat.png)
+
+*Open WebUI on the LAN (`192.168.40.218:3000`) answering a prompt with `llama3.2:3b-instruct-q4_K_M`.*
+
+Proxmox container summary: `images/proxmox-container-summary.png` (TBD)
 
 ---
 
