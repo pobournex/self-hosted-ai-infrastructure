@@ -60,12 +60,12 @@ The networking was stabilized by configuring the container to use the home route
 
 - **Bridge:** `vmbr0`
 - **IPv4 Address:** `192.168.40.218/24` (static)
-- **Gateway (IPv4):** `192.168.40.1`
+- **Gateway (IPv4):** `<router-ip>`
 
 ```ini
 # File: /etc/resolv.conf (configured via Proxmox host GUI network panel)
 search local
-nameserver 192.168.40.1
+nameserver <router-ip>
 ```
 
 ### 3.2 Proxmox Firewall Decision (Documented Trade-off)
@@ -212,7 +212,7 @@ Prompt: *"Explain what a Kubernetes pod is in two sentences."* Measured with `ol
 
 | Problem | Cause | Fix |
 |---|---|---|
-| Image pulls from `ghcr.io` timed out | Container resolved DNS through upstream `1.1.1.1` | Pointed `nameserver` at the home router (`192.168.40.1`) |
+| Image pulls from `ghcr.io` timed out | Container resolved DNS through upstream `1.1.1.1` | Pointed `nameserver` at the home router (`<router-ip>`) |
 | Risk of OOM kills with larger models | 4 GB RAM ceiling | Chose 3B and 1.5B quantized models; kept 512 MB swap as a safeguard |
 | Swap fully used with two models loaded | `llama3.2` (2.6 GB) and `qwen2.5:1.5b` (1.2 GB) resident together | Set `OLLAMA_MAX_LOADED_MODELS=1` so only one model stays resident |
 
