@@ -180,7 +180,9 @@ Prompt: *"Explain what a Kubernetes pod is in two sentences."* Measured with `ol
 
 *Open WebUI on the LAN (`192.168.40.218:3000`) answering a prompt with `llama3.2:3b-instruct-q4_K_M`.*
 
-Proxmox container summary: `images/proxmox-container-summary.png` (TBD)
+![Proxmox summary for LXC ollama-core showing memory and swap usage](images/proxmox-container-summary.png)
+
+*Proxmox summary for container 100 (`ollama-core`) on node `pve2`: 4 vCPU, 4 GiB RAM, 512 MiB swap. The memory graph shows usage climbing as both models were loaded, with swap exhausted at the peak.*
 
 ---
 
