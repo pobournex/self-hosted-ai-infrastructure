@@ -4,6 +4,9 @@ services:
     container_name: ollama
     networks:
       - ai-network
+    environment:
+      # One model resident at a time: keeps the 4 GB container out of swap
+      - OLLAMA_MAX_LOADED_MODELS=1
     volumes:
       - ollama:/root/.ollama
     restart: unless-stopped
@@ -29,4 +32,6 @@ networks:
 
 volumes:
   ollama:
+    name: ollama
   open-webui:
+    name: open-webui

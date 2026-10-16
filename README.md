@@ -94,6 +94,7 @@ Ollama manages LLM lifecycles, memory pinning, and tensor processing on the host
 docker run -d \
   --name ollama \
   --network ai-network \
+  -e OLLAMA_MAX_LOADED_MODELS=1 \
   -v ollama:/root/.ollama \
   --restart unless-stopped \
   ollama/ollama
@@ -174,7 +175,7 @@ Measured on 4 vCPU / 4 GB RAM (CPU-only inference):
 
 Prompt: *"Explain what a Kubernetes pod is in two sentences."* Measured with `ollama run <model> "<prompt>" --verbose`; RAM from `ollama ps`. Cold model load took 40 s (`llama3.2`) and 18 s (`qwen2.5:1.5b`) on the first request; later requests skip it while the model stays resident.
 
-**Memory finding:** with both models resident at once, the container used 3.7 GiB of 4.0 GiB RAM and exhausted its 512 MB swap. Within this budget, run one model at a time. Set `OLLAMA_MAX_LOADED_MODELS=1` on the Ollama container, or lower `OLLAMA_KEEP_ALIVE` so idle models unload sooner.
+**Memory finding:** with both models resident at once, the container used 3.7 GiB of 4.0 GiB RAM and exhausted its 512 MB swap. Within this budget, run one model at a time. The Ollama container now sets `OLLAMA_MAX_LOADED_MODELS=1` (see 4.1), so loading a second model evicts the first. Lowering `OLLAMA_KEEP_ALIVE` would also unload idle models sooner.
 
 ![Open WebUI running llama3.2:3b-instruct-q4_K_M on the local instance](images/open-webui-chat.png)
 
@@ -202,7 +203,7 @@ Prompt: *"Explain what a Kubernetes pod is in two sentences."* Measured with `ol
 |---|---|---|
 | Image pulls from `ghcr.io` timed out | Container resolved DNS through upstream `1.1.1.1` | Pointed `nameserver` at the home router (`192.168.40.1`) |
 | Risk of OOM kills with larger models | 4 GB RAM ceiling | Chose 3B and 1.5B quantized models; kept 512 MB swap as a safeguard |
-| Swap fully used with two models loaded | `llama3.2` (2.6 GB) and `qwen2.5:1.5b` (1.2 GB) resident together | Limit to one loaded model (`OLLAMA_MAX_LOADED_MODELS=1`) or shorten `OLLAMA_KEEP_ALIVE` |
+| Swap fully used with two models loaded | `llama3.2` (2.6 GB) and `qwen2.5:1.5b` (1.2 GB) resident together | Set `OLLAMA_MAX_LOADED_MODELS=1` so only one model stays resident |
 
 ---
 
