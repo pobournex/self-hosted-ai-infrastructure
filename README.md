@@ -68,9 +68,20 @@ search local
 nameserver 192.168.40.1
 ```
 
-### 3.2 Proxmox Host Firewall Management
+### 3.2 Proxmox Firewall Decision (Documented Trade-off)
 
-To prevent automated drop rules from intercepting standard network traffic, the Proxmox interface-level firewall checkbox for `net0` was left unchecked. This relies on the edge router's NAT protections within the private `192.168.40.x` subnet, avoiding administrative overhead during high-volume container pulls.
+**Decision:** The Proxmox interface-level firewall for `net0` is left disabled on this container.
+
+**Rationale:** This is a single-purpose, LAN-only lab service. Provisioning involved many image pulls and DNS changes, and an interface firewall with default-drop rules made it harder to separate network faults from firewall faults. The firewall was left off to keep troubleshooting simple.
+
+**Compensating controls:**
+- Only one port is published (`3000`, Open WebUI). Ollama's API (`11434`) is reachable only on the internal Docker network.
+- The container sits on a private subnet (`192.168.40.0/24`) behind the router's NAT, with no port forwarding configured.
+- Open WebUI requires authentication, and sign-ups are disabled after the admin account is created (see section 8).
+
+**Residual risk:** Any device on the LAN can reach the container's open ports. A compromised or untrusted LAN device (IoT, guest) could probe it.
+
+**Revisit when:** the service is exposed beyond the LAN, other users or untrusted devices join the network, or the container holds sensitive data. The hardening path is to enable the `net0` firewall and allow only TCP 3000 (and SSH if needed) from the trusted subnet.
 
 ### 3.3 Isolated Docker Network Creation
 
@@ -190,8 +201,8 @@ Prompt: *"Explain what a Kubernetes pod is in two sentences."* Measured with `ol
 ## 8. Security Considerations
 
 - **Network exposure:** The service is LAN-only and not published to the internet. No port forwarding is configured on the router.
-- **Firewall trade-off:** The Proxmox `net0` firewall was left off during provisioning (see 3.2). Hardening step: enable it and allow only TCP 3000 from the trusted LAN subnet.
-- **Open WebUI access:** Create the admin account on first launch, then disable open sign-ups (Admin Panel → Settings → General).
+- **Firewall trade-off:** The Proxmox `net0` firewall is intentionally left off, with compensating controls and revisit triggers documented in 3.2.
+- **Open WebUI access:** Create the admin account on first launch, then turn off **New Sign Ups** (Admin Panel → Settings → Authentication). The default role for any new account is `pending`, so accounts need admin approval even if sign-ups were re-enabled.
 - **Remote access:** Use a VPN overlay such as Tailscale rather than exposing port 3000.
 - **Data sovereignty:** Prompts and responses never leave the LXC. Models are pulled once, then inference runs offline.
 
